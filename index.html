@@ -2,72 +2,70 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>IA Image Generator - Versione Stabile</title>
+    <title>IA Generator - Ultra Stabile</title>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .container { background: #1e1e1e; padding: 25px; border-radius: 15px; text-align: center; width: 400px; border: 1px solid #333; }
-        textarea { width: 100%; height: 80px; padding: 10px; border-radius: 8px; border: none; font-size: 14px; margin-bottom: 15px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        #imageContainer { margin-top: 20px; min-height: 200px; display: flex; align-items: center; justify-content: center; border: 2px dashed #333; border-radius: 10px; overflow: hidden; }
-        img { max-width: 100%; height: auto; display: none; }
-        .status { color: #ffc107; font-size: 14px; display: none; }
+        body { font-family: sans-serif; background: #0a0a0a; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .box { background: #1a1a1a; padding: 30px; border-radius: 20px; width: 450px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        textarea { width: 100%; height: 100px; padding: 15px; border-radius: 10px; border: 1px solid #333; background: #252525; color: white; font-size: 16px; box-sizing: border-box; }
+        button { width: 100%; margin-top: 15px; padding: 15px; background: #ff4757; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        button:disabled { background: #555; cursor: not-allowed; }
+        #imgArea { margin-top: 20px; border: 2px dashed #444; border-radius: 15px; min-height: 300px; display: flex; align-items: center; justify-content: center; position: relative; }
+        img { max-width: 100%; border-radius: 12px; display: none; }
+        .loader { display: none; color: #ffa502; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h3>Scrivi e Genera</h3>
-    <textarea id="promptInput" placeholder="Esempio: Un gatto spaziale..."></textarea>
-    <button id="btn" onclick="genera()">GENERA IMMAGINE</button>
+<div class="box">
+    <h2>Generatore IA Offline-Safe</h2>
+    <textarea id="txt" placeholder="Scrivi in inglese per sicurezza (es: a futuristic car)"></textarea>
+    <button id="go" onclick="faiImmagine()">GENERA ORA</button>
 
-    <div id="imageContainer">
-        <p id="stato" class="status">L'IA sta lavorando... (circa 10-15 secondi)</p>
-        <img id="risultato" src="" alt="Immagine">
+    <div id="imgArea">
+        <p id="wait" class="loader">⚙️ L'IA sta creando l'immagine... attendi 10 secondi</p>
+        <img id="pic" src="" alt="Risultato">
     </div>
 </div>
 
 <script>
-    function genera() {
-        const testo = document.getElementById('promptInput').value;
-        const immagine = document.getElementById('risultato');
-        const stato = document.getElementById('stato');
-        const bottone = document.getElementById('btn');
+    async function faiImmagine() {
+        const prmt = document.getElementById('txt').value;
+        const pic = document.getElementById('pic');
+        const wait = document.getElementById('wait');
+        const btn = document.getElementById('go');
 
-        if (!testo) return alert("Scrivi qualcosa!");
+        if (!prmt) return alert("Scrivi qualcosa!");
 
-        // 1. Reset interfaccia
-        bottone.disabled = true;
-        bottone.innerText = "GENERAZIONE IN CORSO...";
-        stato.style.display = 'block';
-        immagine.style.display = 'none';
+        // Reset
+        btn.disabled = true;
+        wait.style.display = 'block';
+        pic.style.display = 'none';
 
-        // 2. Proviamo con il server Airforce (più veloce per il Web)
-        const seed = Math.floor(Math.random() * 1000000);
-        const url = `https://api.airforce/v1/imagestudio?prompt=${encodeURIComponent(testo)}&model=stable-diffusion-xl-v1.0&seed=${seed}`;
+        // URL del generatore (usiamo un altro gateway ancora)
+        const seed = Math.floor(Math.random() * 9999);
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prmt)}?model=flux&seed=${seed}&nologo=true`;
 
-        // 3. Caricamento immagine
-        immagine.src = url;
-
-        immagine.onload = function() {
-            stato.style.display = 'none';
-            immagine.style.display = 'block';
-            bottone.disabled = false;
-            bottone.innerText = "GENERA IMMAGINE";
-        };
-
-        // 4. Se il primo server fallisce dopo 20 secondi, prova il secondo
-        setTimeout(() => {
-            if (immagine.style.display === 'none') {
-                stato.innerText = "Cambio server in corso... attendi...";
-                immagine.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(testo)}?model=flux&nologo=true`;
-            }
-        }, 15000);
-
-        immagine.onerror = function() {
-            stato.innerText = "Errore di connessione. Riprova.";
-            bottone.disabled = false;
-            bottone.innerText = "GENERA IMMAGINE";
-        };
+        // TECNICA DI SBLOCCO: Proviamo a "pre-scaricare" l'immagine come dati
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Server occupato");
+            
+            const blob = await response.blob();
+            const objectURL = URL.createObjectURL(blob);
+            
+            pic.src = objectURL;
+            pic.style.display = 'block';
+            wait.style.display = 'none';
+        } catch (err) {
+            // Se fallisce, prova il metodo diretto come ultima spiaggia
+            pic.src = url;
+            pic.onload = () => {
+                pic.style.display = 'block';
+                wait.style.display = 'none';
+            };
+        } finally {
+            btn.disabled = false;
+        }
     }
 </script>
 
