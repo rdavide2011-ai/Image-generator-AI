@@ -2,74 +2,27 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>IA Image Generator</title>
+    <title>IA Image Generator - Versione Stabile</title>
     <style>
-        /* Stile moderno e pulito */
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #f0f2f5; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
-            margin: 0; 
-        }
-        .container { 
-            background: white; 
-            padding: 30px; 
-            border-radius: 15px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
-            text-align: center;
-            width: 90%;
-            max-width: 500px;
-        }
-        textarea { 
-            width: 100%; 
-            height: 100px; 
-            padding: 15px; 
-            border: 2px solid #ddd; 
-            border-radius: 10px; 
-            font-size: 16px; 
-            resize: none;
-            box-sizing: border-box;
-            margin-bottom: 20px;
-        }
-        button { 
-            width: 100%; 
-            padding: 15px; 
-            background-color: #007bff; 
-            color: white; 
-            border: none; 
-            border-radius: 10px; 
-            font-size: 18px; 
-            font-weight: bold;
-            cursor: pointer; 
-            transition: background 0.3s;
-        }
-        button:hover { background-color: #0056b3; }
-        #imageContainer { margin-top: 25px; min-height: 200px; }
-        img { 
-            max-width: 100%; 
-            border-radius: 10px; 
-            display: none; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        .loading { display: none; color: #555; font-style: italic; }
+        body { font-family: sans-serif; background: #121212; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .container { background: #1e1e1e; padding: 25px; border-radius: 15px; text-align: center; width: 400px; border: 1px solid #333; }
+        textarea { width: 100%; height: 80px; padding: 10px; border-radius: 8px; border: none; font-size: 14px; margin-bottom: 15px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        #imageContainer { margin-top: 20px; min-height: 200px; display: flex; align-items: center; justify-content: center; border: 2px dashed #333; border-radius: 10px; overflow: hidden; }
+        img { max-width: 100%; height: auto; display: none; }
+        .status { color: #ffc107; font-size: 14px; display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Cosa vuoi generare?</h2>
-    
-    <textarea id="promptInput" placeholder="Descrivi la tua immagine qui... (es. Un astronauta che cavalca un dinosauro)"></textarea>
-    
-    <button onclick="genera()">GENERA IMMAGINE</button>
+    <h3>Scrivi e Genera</h3>
+    <textarea id="promptInput" placeholder="Esempio: Un gatto spaziale..."></textarea>
+    <button id="btn" onclick="genera()">GENERA IMMAGINE</button>
 
     <div id="imageContainer">
-        <p id="stato" class="loading">L'intelligenza artificiale sta creando...</p>
-        <img id="risultato" src="" alt="Immagine generata">
+        <p id="stato" class="status">L'IA sta lavorando... (circa 10-15 secondi)</p>
+        <img id="risultato" src="" alt="Immagine">
     </div>
 </div>
 
@@ -78,25 +31,42 @@
         const testo = document.getElementById('promptInput').value;
         const immagine = document.getElementById('risultato');
         const stato = document.getElementById('stato');
+        const bottone = document.getElementById('btn');
 
-        if (!testo) {
-            alert("Per favore, inserisci un testo!");
-            return;
-        }
+        if (!testo) return alert("Scrivi qualcosa!");
 
-        // Mostra caricamento
+        // 1. Reset interfaccia
+        bottone.disabled = true;
+        bottone.innerText = "GENERAZIONE IN CORSO...";
         stato.style.display = 'block';
         immagine.style.display = 'none';
 
-        // Creazione link (usiamo il motore Flux per la massima qualità)
-        const url = "https://image.pollinations.ai/prompt/" + encodeURIComponent(testo) + "?model=flux&width=1024&height=1024&seed=" + Math.random();
+        // 2. Proviamo con il server Airforce (più veloce per il Web)
+        const seed = Math.floor(Math.random() * 1000000);
+        const url = `https://api.airforce/v1/imagestudio?prompt=${encodeURIComponent(testo)}&model=stable-diffusion-xl-v1.0&seed=${seed}`;
 
+        // 3. Caricamento immagine
         immagine.src = url;
 
-        // Quando l'immagine è pronta, mostrala
         immagine.onload = function() {
             stato.style.display = 'none';
             immagine.style.display = 'block';
+            bottone.disabled = false;
+            bottone.innerText = "GENERA IMMAGINE";
+        };
+
+        // 4. Se il primo server fallisce dopo 20 secondi, prova il secondo
+        setTimeout(() => {
+            if (immagine.style.display === 'none') {
+                stato.innerText = "Cambio server in corso... attendi...";
+                immagine.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(testo)}?model=flux&nologo=true`;
+            }
+        }, 15000);
+
+        immagine.onerror = function() {
+            stato.innerText = "Errore di connessione. Riprova.";
+            bottone.disabled = false;
+            bottone.innerText = "GENERA IMMAGINE";
         };
     }
 </script>
