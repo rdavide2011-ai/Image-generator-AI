@@ -2,59 +2,60 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Generatore IA Definitivo</title>
+    <title>IA SBLOCCATA</title>
     <style>
-        body { font-family: sans-serif; background: #000; color: #0f0; display: flex; flex-direction: column; align-items: center; padding: 50px; }
-        .box { background: #111; border: 2px solid #0f0; padding: 20px; border-radius: 10px; width: 100%; max-width: 500px; text-align: center; }
-        textarea { width: 100%; height: 60px; background: #000; color: #0f0; border: 1px solid #0f0; padding: 10px; margin-bottom: 20px; box-sizing: border-box; }
-        button { background: #0f0; color: #000; border: none; padding: 15px 30px; font-weight: bold; cursor: pointer; width: 100%; }
-        #loader { display: none; margin: 20px 0; color: white; }
-        img { max-width: 100%; margin-top: 20px; border: 1px solid #fff; display: none; }
+        body { font-family: sans-serif; background: #000; color: #00ff00; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .main { background: #111; border: 3px solid #00ff00; padding: 25px; border-radius: 15px; width: 90%; max-width: 450px; text-align: center; }
+        textarea { width: 100%; height: 80px; background: #222; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 10px; margin-bottom: 20px; font-size: 16px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #00ff00; color: #000; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 18px; }
+        button:hover { background: #00cc00; }
+        #output { margin-top: 20px; min-height: 200px; display: flex; align-items: center; justify-content: center; border: 1px dashed #333; }
+        img { max-width: 100%; border-radius: 10px; display: none; }
+        .msg { display: none; color: white; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h2>IA IMAGE ENGINE 2.0</h2>
-    <textarea id="testo" placeholder="SCRIVI IN INGLESE (es: blue dragon)"></textarea>
-    <button id="bottone" onclick="genera()">GENERA ORA</button>
-    
-    <div id="loader">CARICAMENTO IN CORSO... ATTENDI 10 SECONDI</div>
-    <img id="foto" src="">
+<div class="main">
+    <h2>BYPASS GENERATOR</h2>
+    <textarea id="box" placeholder="Scrivi in INGLESE (es: A red dragon)"></textarea>
+    <button id="btn" onclick="vai()">GENERA ORA</button>
+
+    <div id="output">
+        <p id="carica" class="msg">⚠️ AGGIRAMENTO BLOCCHI IN CORSO... ATTENDI...</p>
+        <img id="foto" src="">
+    </div>
 </div>
 
 <script>
-    function genera() {
-        const prompt = document.getElementById('testo').value;
+    function vai() {
+        const t = document.getElementById('box').value;
         const img = document.getElementById('foto');
-        const loader = document.getElementById('loader');
-        const btn = document.getElementById('bottone');
+        const msg = document.getElementById('carica');
+        const btn = document.getElementById('btn');
 
-        if(!prompt) return alert("Scrivi qualcosa!");
+        if(!t) return alert("Scrivi qualcosa!");
 
-        // Reset
-        img.style.display = 'none';
-        loader.style.display = 'block';
         btn.disabled = true;
+        msg.style.display = "block";
+        img.style.display = "none";
 
-        // Puliamo il testo per l'URL
-        const cleanPrompt = encodeURIComponent(prompt.trim());
-        const seed = Math.floor(Math.random() * 99999);
-
-        // USIAMO UN LINK DIRETTO (meno probabile che venga bloccato)
-        const nuovoUrl = `https://pollinations.ai/p/${cleanPrompt}?width=1024&height=1024&seed=${seed}&model=flux`;
-
-        // Carichiamo l'immagine
-        img.src = nuovoUrl;
+        const seed = Math.floor(Math.random() * 100000);
+        // Usiamo un proxy che nasconde la richiesta al tuo operatore
+        const proxy = "https://images.weserv.nl/?url=";
+        const target = `pollinations.ai/p/${encodeURIComponent(t)}?width=1024&height=1024&seed=${seed}&model=flux`;
+        
+        // Il link finale passa attraverso weserv (un servizio di Google/Cloudflare)
+        img.src = proxy + target;
 
         img.onload = function() {
-            loader.style.display = 'none';
-            img.style.display = 'block';
+            msg.style.display = "none";
+            img.style.display = "block";
             btn.disabled = false;
         };
 
         img.onerror = function() {
-            loader.innerText = "ERRORE CRITICO: Il tuo provider blocca l'IA.";
+            msg.innerText = "ERRORE: Anche il proxy è bloccato. Prova a usare il cellulare senza Wi-Fi.";
             btn.disabled = false;
         };
     }
