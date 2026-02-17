@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Il Mio Generatore IA</title>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: white; text-align: center; padding: 50px; }
+        input { padding: 15px; width: 60%; border-radius: 5px; border: none; font-size: 16px; }
+        button { padding: 15px 30px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-left: 10px; }
+        button:hover { background: #0056b3; }
+        #result { margin-top: 30px; }
+        img { max-width: 100%; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5); display: none; margin: 0 auto; }
+        .loading { display: none; color: #ffc107; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>Generatore di Immagini IA 🎨</h1>
+    <p>Scrivi cosa vuoi vedere e clicca su "Genera"</p>
+
+    <input type="text" id="prompt" placeholder="Es: Un guerriero cyberpunk nel deserto...">
+    <button onclick="generaImmagine()">Genera</button>
+
+    <div id="result">
+        <p class="loading" id="status">L'IA sta lavorando... attendi...</p>
+        <img id="outputImage" src="" alt="Immagine Generata">
+    </div>
+
+    <script>
+        function generaImmagine() {
+            const prompt = document.getElementById('prompt').value;
+            const status = document.getElementById('status');
+            const img = document.getElementById('outputImage');
+
+            if (!prompt) {
+                alert("Scrivi qualcosa prima!");
+                return;
+            }
+
+            // Mostra caricamento e nascondi vecchia immagine
+            status.style.display = 'block';
+            img.style.display = 'none';
+
+            // Usiamo il motore Flux (molto potente e veloce)
+            const timestamp = new Date().getTime(); // Per evitare che il browser usi la cache
+            const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=1024&height=1024&seed=${timestamp}`;
+
+            // Carichiamo l'immagine
+            img.src = imageUrl;
+
+            img.onload = function() {
+                status.style.display = 'none';
+                img.style.display = 'block';
+            };
+
+            img.onerror = function() {
+                status.innerText = "Errore nel caricamento. Riprova con un altro testo.";
+            };
+        }
+    </script>
+</body>
+</html>
