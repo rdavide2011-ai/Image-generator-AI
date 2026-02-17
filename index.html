@@ -2,70 +2,77 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>IA Generator - Ultra Stabile</title>
+    <title>IA Super Veloce</title>
     <style>
-        body { font-family: sans-serif; background: #0a0a0a; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .box { background: #1a1a1a; padding: 30px; border-radius: 20px; width: 450px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        textarea { width: 100%; height: 100px; padding: 15px; border-radius: 10px; border: 1px solid #333; background: #252525; color: white; font-size: 16px; box-sizing: border-box; }
-        button { width: 100%; margin-top: 15px; padding: 15px; background: #ff4757; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; }
-        button:disabled { background: #555; cursor: not-allowed; }
-        #imgArea { margin-top: 20px; border: 2px dashed #444; border-radius: 15px; min-height: 300px; display: flex; align-items: center; justify-content: center; position: relative; }
-        img { max-width: 100%; border-radius: 12px; display: none; }
-        .loader { display: none; color: #ffa502; font-weight: bold; }
+        body { font-family: 'Segoe UI', sans-serif; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: #111; padding: 2rem; border-radius: 20px; width: 400px; text-align: center; border: 1px solid #333; }
+        textarea { width: 100%; height: 80px; padding: 12px; border-radius: 10px; border: 1px solid #444; background: #222; color: #fff; resize: none; margin-bottom: 1rem; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #00ff88; color: #000; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        button:disabled { background: #333; color: #666; }
+        #output { margin-top: 20px; width: 100%; min-height: 300px; border-radius: 10px; background: #050505; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        img { width: 100%; height: auto; display: none; }
+        .spinner { display: none; border: 4px solid #333; border-top: 4px solid #00ff88; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h2>Generatore IA Offline-Safe</h2>
-    <textarea id="txt" placeholder="Scrivi in inglese per sicurezza (es: a futuristic car)"></textarea>
-    <button id="go" onclick="faiImmagine()">GENERA ORA</button>
+<div class="card">
+    <h2>⚡ IA Image Engine</h2>
+    <textarea id="prompt" placeholder="Scrivi qui (prova in inglese per velocità: a futuristic city)"></textarea>
+    <button id="btn" onclick="genera()">Genera Immagine</button>
 
-    <div id="imgArea">
-        <p id="wait" class="loader">⚙️ L'IA sta creando l'immagine... attendi 10 secondi</p>
-        <img id="pic" src="" alt="Risultato">
+    <div id="output">
+        <div id="loader" class="spinner"></div>
+        <img id="result" src="" alt="IA Result">
     </div>
 </div>
 
 <script>
-    async function faiImmagine() {
-        const prmt = document.getElementById('txt').value;
-        const pic = document.getElementById('pic');
-        const wait = document.getElementById('wait');
-        const btn = document.getElementById('go');
+    function genera() {
+        const text = document.getElementById('prompt').value;
+        const btn = document.getElementById('btn');
+        const img = document.getElementById('result');
+        const loader = document.getElementById('loader');
 
-        if (!prmt) return alert("Scrivi qualcosa!");
+        if (!text) return alert("Scrivi qualcosa!");
 
-        // Reset
+        // Preparazione
         btn.disabled = true;
-        wait.style.display = 'block';
-        pic.style.display = 'none';
+        btn.innerText = "Creazione...";
+        loader.style.display = "block";
+        img.style.display = "none";
 
-        // URL del generatore (usiamo un altro gateway ancora)
-        const seed = Math.floor(Math.random() * 9999);
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prmt)}?model=flux&seed=${seed}&nologo=true`;
+        // Usiamo un server ad alta priorità
+        const seed = Math.floor(Math.random() * 10000);
+        // Questo URL usa un'istanza di Stable Diffusion XL molto più reattiva
+        const url = `https://api.airforce/v1/imagestudio?prompt=${encodeURIComponent(text)}&model=stable-diffusion-xl-v1.0&seed=${seed}`;
 
-        // TECNICA DI SBLOCCO: Proviamo a "pre-scaricare" l'immagine come dati
-        try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error("Server occupato");
-            
-            const blob = await response.blob();
-            const objectURL = URL.createObjectURL(blob);
-            
-            pic.src = objectURL;
-            pic.style.display = 'block';
-            wait.style.display = 'none';
-        } catch (err) {
-            // Se fallisce, prova il metodo diretto come ultima spiaggia
-            pic.src = url;
-            pic.onload = () => {
-                pic.style.display = 'block';
-                wait.style.display = 'none';
-            };
-        } finally {
+        // Tentativo di caricamento con timeout forzato
+        const timer = setTimeout(() => {
+            if (img.style.display === "none") {
+                alert("Il server è troppo lento. Sto provando un motore di riserva...");
+                img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(text)}?nologo=true&seed=${seed}`;
+            }
+        }, 15000);
+
+        img.src = url;
+
+        img.onload = () => {
+            clearTimeout(timer);
+            loader.style.display = "none";
+            img.style.display = "block";
             btn.disabled = false;
-        }
+            btn.innerText = "Genera Immagine";
+        };
+
+        img.onerror = () => {
+            clearTimeout(timer);
+            alert("Errore di rete. Controlla la tua connessione.");
+            loader.style.display = "none";
+            btn.disabled = false;
+            btn.innerText = "Genera Immagine";
+        };
     }
 </script>
 
